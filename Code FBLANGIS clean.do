@@ -1,0 +1,617 @@
+*Clear the memory and close any log files that are still open
+capture clear
+capture log close
+*Import dataset
+cd C:\Users\Flora\Desktop\postdoc\STATA
+use FloraBlangis_ERisk_08Dec2023
+
+
+
+*****************************************************************
+*DATA MANAGEMENT												*
+*****************************************************************
+
+*Maternal warmth combined at 7 and 10
+capture drop warme510
+egen warme510 = rowmean(warme5 warme10)
+sum warme510
+
+*Sibling warmth combined at 7 and 10
+capture drop sibwrmm710
+egen sibwrmm710 = rowmean(sibwrmm7 sibwrmm10)
+sum sibwrmm710
+
+*Atmosphere at home combined at 7 and 10
+capture drop athome710
+egen athome710= rowmean(athome7 athome10)
+sum athome710
+
+*Maternal monitoring combined at 10 and 12
+capture drop monem1012
+egen monem1012 = rowmean(monem10 monem12)
+sum monem1012
+
+
+//Correlations - combined variables. TABLE 1
+pwcorr warme5 warme10, sig
+pwcorr sibwrmm7 sibwrmm10, sig
+pwcorr athome7 athome10, sig
+pwcorr monem10 monem12, sig
+
+
+*Poly-victimisation variable
+
+*Recoding polyve512c in 1 (severe abuse) and 0 (mild and no abuse) (used for sensitivity analyses)
+capture drop polyve512c_rec
+recode polyve512c (0/1=0) (.=.) (else=1), gen(polyve512c_rec) 
+
+
+*Recoding ExpV_DV510 in 1 (mild and severe abuse) and 0 (no abuse)
+capture drop ExpV_DV510_rec
+recode ExpV_DV510 (0=0) (.=.) (else=1), gen(ExpV_DV510_rec) 
+
+*Recoding bullseve12 in 1 (mild and severe abuse) and 0 (no abuse)
+capture drop bullseve12_rec
+recode bullseve12 (0=0) (.=.) (else=1), gen(bullseve12_rec) 
+
+*Recoding pabsevtye12 in 1 (mild and severe abuse) and 0 (no abuse)
+capture drop pabsevtye12_rec
+recode pabsevtye12 (0=0) (.=.) (else=1), gen(pabsevtye12_rec) 
+
+*Recoding sasevtye12 in 1 (mild and severe abuse) and 0 (no abuse)
+capture drop sasevtye12_rec
+recode sasevtye12 (0=0) (.=.) (else=1), gen(sasevtye12_rec) 
+
+*Recoding eanseve12 in 1 (mild and severe abuse) and 0 (no abuse)
+capture drop eanseve12_rec
+recode eanseve12 (0=0) (.=.) (else=1), gen(eanseve12_rec) 
+ 
+*Recoding pnseveritye12 in 1 (mild and severe abuse) and 0 (no abuse)
+capture drop pnseveritye12_rec
+recode pnseveritye12 (0=0) (.=.) (else=1), gen(pnseveritye12_rec) 
+
+*Sum victimisation variables
+capture drop polyve512c_rec_3
+egen polyve512c_rec_3= rowtotal(ExpV_DV510_rec bullseve12_rec pabsevtye12_rec sasevtye12_rec eanseve12_rec pnseveritye12_rec)
+
+*Recoding polyve512c_rec_3 in 1 (poly-victimisation) and 0 (1 or 0 abuse)
+recode polyve512c_rec_3 (0/1=0) (.=.) (else=1)
+
+
+*Generate variable ctqtot (=total) retrospective victimisation at 18 including prospective bullying and domestic violence
+capture drop ctqtot
+egen ctqtot= rowtotal(ctqpncce18 ctqpacce18 ctqencce18 ctqeacce18 ctqsacce18 bullseve12_rec ExpV_DV510_rec) // this allowes to creates the sum of the variables, ignoring missing values.
+
+*Recoding ctqtot in 1 (poly-victimisation) and 0 (0 or 1 victimisation)
+capture drop ctqtot_rec
+recode ctqtot (0/1=0) (.=.) (else=1), gen(ctqtot_rec)
+
+
+
+********************COMPLETE DATA**************************
+
+*Generate variable "complete_data" with no missing data for ph_e and for polyve512c_rec
+count if PH_E==.
+count if polyve512c_rec_3==. // no missing data for polyvictimisation
+capture drop complete_data
+gen complete_data=1 if (PH_E !=.)
+recode complete_data (. =0)
+
+
+
+
+
+*************************************************************
+*					GENERAL DESCRIPTION						*
+*************************************************************
+
+**********Description / complete data***********
+drop if complete_data==0
+table complete_data,missing
+
+
+// TABLE 2
+
+*Proportion of poly-victimised children
+tab polyve512c_rec_3, missing
+
+*Biological sex
+tab sampsex, missing
+tab sampsex if polyve512c_rec_3==0
+tab sampsex if polyve512c_rec_3==1
+
+*Family SES
+tab seswq35, missing
+tab seswq35 if polyve512c_rec_3==0
+tab seswq35 if polyve512c_rec_3==1
+
+*Family members with any psychiatric disorder
+sum fhanypm12
+sum fhanypm12 if polyve512c_rec_3==0
+sum fhanypm12 if polyve512c_rec_3==1
+
+*Distribution of PH_E (general psychopathology)
+hist (PH_E)
+sum PH_E, detail
+hist PH_E if polyve512c_rec_3==0
+sum PH_E if polyve512c_rec_3==0
+hist PH_E if polyve512c_rec_3==1 
+sum PH_E if polyve512c_rec_3==1
+
+*Proportion of victimised children per category of abuse
+tab ExpV_DV510_rec, missing // exposure to domestic violence
+tab ExpV_DV510_rec if polyve512c_rec_3==0
+tab ExpV_DV510_rec if polyve512c_rec_3==1
+
+tab bullseve12_rec, missing // bullying by peers
+tab bullseve12_rec if polyve512c_rec_3==0
+tab bullseve12_rec if polyve512c_rec_3==1
+
+tab pabsevtye12_rec, missing // physical abuse
+tab pabsevtye12_rec if polyve512c_rec_3==0
+tab pabsevtye12_rec if polyve512c_rec_3==1
+
+tab sasevtye12_rec, missing // sexual abuse
+tab sasevtye12_rec if polyve512c_rec_3==0
+tab sasevtye12_rec if polyve512c_rec_3==1
+
+tab eanseve12_rec, missing // emotional abuse / neglect
+tab eanseve12_rec if polyve512c_rec_3==0
+tab eanseve12_rec if polyve512c_rec_3==1
+
+tab pnseveritye12_rec, missing // physical neglect
+tab pnseveritye12_rec if polyve512c_rec_3==0
+tab pnseveritye12_rec if polyve512c_rec_3==1
+
+*Proportion of participants with retrospective victimisation
+tab ctqtot_rec, missing
+tab ctqtot_rec if polyve512c_rec_3==0
+tab ctqtot_rec if polyve512c_rec_3==1
+
+*Potential protective factors
+*Mean score factors per category
+hist iqe5 // IQ
+sum iqe5, detail
+hist iqe5 if polyve512c_rec_3==0 
+sum iqe5 if polyve512c_rec_3==0, detail
+hist iqe5 if polyve512c_rec_3==1 
+sum iqe5 if polyve512c_rec_3==1, detail
+
+hist exfunce5 // executive function
+sum exfunce5, detail
+hist exfunce5 if polyve512c_rec_3==0 
+sum exfunce5 if polyve512c_rec_3==0, detail
+hist exfunce5 if polyve512c_rec_3==1
+sum exfunce5 if polyve512c_rec_3==1, detail
+
+hist appe5 // approach
+sum appe5, detail
+hist appe5 if polyve512c_rec_3==0
+sum appe5 if polyve512c_rec_3==0, detail
+hist appe5 if polyve512c_rec_3==1 
+sum appe5 if polyve512c_rec_3==1, detail
+
+hist warme510 // maternal warmth
+sum warme510, detail
+hist warme510 if polyve512c_rec_3==0
+sum warme510 if polyve512c_rec_3==0, detail
+hist warme510 if polyve512c_rec_3==1
+sum warme510 if polyve512c_rec_3==1, detail
+
+hist sibwrmm710 // sibling warmth
+sum sibwrmm710, detail
+hist sibwrmm710 if polyve512c_rec_3==0
+sum sibwrmm710 if polyve512c_rec_3==0, detail
+hist sibwrmm710 if polyve512c_rec_3==1
+sum sibwrmm710 if polyve512c_rec_3==1, detail
+
+hist athome710 // home atmosphere combined
+sum athome710, detail
+hist athome710 if polyve512c_rec_3==0
+sum athome710 if polyve512c_rec_3==0, detail
+hist athome710 if polyve512c_rec_3==1
+sum athome710 if polyve512c_rec_3==1, detail
+
+hist monem1012 // maternal monitoring
+sum monem1012, detail
+hist monem1012 if polyve512c_rec_3==0
+sum monem1012 if polyve512c_rec_3==0, detail
+hist monem1012 if polyve512c_rec_3==1 
+sum monem1012 if polyve512c_rec_3==1, detail
+
+hist s2cohe // social cohesion
+sum s2cohe, detail
+hist s2cohe if polyve512c_rec_3==0
+sum s2cohe if polyve512c_rec_3==0, detail
+hist s2cohe if polyve512c_rec_3==1
+sum s2cohe if polyve512c_rec_3==1, detail
+
+hist adultec12 // supportive adult
+sum adultec12, detail
+hist adultec12 if polyve512c_rec_3==0
+sum adultec12 if polyve512c_rec_3==0, detail
+hist adultec12 if polyve512c_rec_3==1
+sum adultec12 if polyve512c_rec_3==1, detail
+
+
+
+
+************************************************************
+*						ANALYSES					       *
+************************************************************
+
+
+************************STEP1*******************************
+*Is poly-victimisation in childhood associated with early-adult psychopathology?
+
+*distribution of general psychopathology among poly-victimised children
+sum PH_E if polyve512c_rec_3==1 
+sum PH_E if polyve512c_rec_3==0 
+
+*Crude association
+reg PH_E i.polyve512c_rec_3, cluster(familyid)
+
+*Adjusted association
+reg PH_E i.polyve512c_rec_3 i.sampsex i.seswq35 fhanypm12, cluster(familyid)
+
+*Linearity / visual test
+rvfplot, yline(0)
+
+
+
+*******************************STEP 2**********************
+* Are individual, family, or community-level factors associated with lower levels of general psychopathology among poly-victimised children?
+
+// TABLE 3
+
+***********IQE5
+*Crude
+reg PH_E c.iqe5 if polyve512c_rec_3==1, cluster(familyid)
+
+*Adjusted
+reg PH_E c.iqe5 i.sampsex i.seswq35 fhanypm12 if polyve512c_rec_3==1, cluster(familyid)
+reg, beta
+
+
+**********Executive function
+*Crude
+reg PH_E c.exfunce5 if polyve512c_rec_3==1, cluster(familyid)
+
+*Adjusted
+reg PH_E c.exfunce5 i.sampsex i.seswq35 fhanypm12 if polyve512c_rec_3==1, cluster(familyid)
+reg, beta
+
+
+**********Temperament (approach) 
+*Crude
+reg PH_E c.appe5 if polyve512c_rec_3==1, cluster(familyid)
+
+*Adjusted
+reg PH_E c.appe5 i.sampsex i.seswq35 fhanypm12 if polyve512c_rec_3==1, cluster(familyid)
+reg, beta
+
+
+********** Maternal warmth
+*Crude
+reg PH_E c.warme510 if polyve512c_rec_3==1, cluster(familyid)
+
+*Adjusted
+reg PH_E c.warme510 i.sampsex i.seswq35 fhanypm12 if polyve512c_rec_3==1, cluster(familyid)
+reg, beta
+
+
+********** Sibling warmth 
+*Crude
+reg PH_E c.sibwrmm710 if polyve512c_rec_3==1, cluster(familyid)
+
+*Adjusted
+reg PH_E c.sibwrmm710 i.sampsex i.seswq35 fhanypm12 if polyve512c_rec_3==1, cluster(familyid)
+reg, beta
+
+
+********** Atmosphere at home 
+*Crude
+reg PH_E c.athome710 if polyve512c_rec_3==1, cluster(familyid)
+
+*Adjusted
+reg PH_E c.athome710 i.sampsex i.seswq35 fhanypm12 if polyve512c_rec_3==1, cluster(familyid)
+reg, beta
+
+
+********** Maternal monitoring 
+*Crude
+reg PH_E c.monem1012 if polyve512c_rec_3==1, cluster(familyid)
+
+*Adjusted
+reg PH_E c.monem1012 i.sampsex i.seswq35 fhanypm12 if polyve512c_rec_3==1, cluster(familyid)
+reg, beta
+
+
+********** Social cohesion 
+*Crude
+reg PH_E c.s2cohe if polyve512c_rec_3==1, cluster(familyid)
+
+*Adjusted
+reg PH_E c.s2cohe i.sampsex i.seswq35 fhanypm12 if polyve512c_rec_3==1, cluster(familyid)
+reg, beta
+
+
+********** Supportive adult
+*Crude
+reg PH_E c.adultec12 if polyve512c_rec_3==1, cluster(familyid)
+
+*Adjusted
+reg PH_E c.adultec12 i.sampsex i.seswq35 fhanypm12 if polyve512c_rec_3==1, cluster(familyid)
+reg, beta
+
+
+************************STEP 3***************************
+* Are these factors specific to poly-victimised children?
+
+*Supportive adult
+*Crude
+reg PH_E polyve512c_rec_3##c.adultec12, cluster(familyid)  
+*Adjusted
+reg PH_E polyve512c_rec_3##c.adultec12 i.sampsex i.seswq35 fhanypm12, cluster(familyid) 
+
+  
+ 
+*******************************************************
+*				SENSITIVITY ANALYSES          		  * 
+*******************************************************
+
+*(i) Defining early-adult psychopathology in terms of three domains
+
+************************STEP 1***************************
+
+//Supplementary TABLE 1
+
+*Association between internalizing disorders and poly-victimisation, whole sample
+*Crude association
+reg INTCF_E polyve512c_rec_3, cluster(familyid)
+*Adjusted association
+reg INTCF_E polyve512c_rec_3 i.sampsex i.seswq35 fhanypm12, cluster(familyid)
+*Linearity / visual test
+rvfplot, yline(0)
+
+
+*Association between externalizing disorders and poly-victimisation, whole sample
+*Crude association
+reg EXTCF_E polyve512c_rec_3, cluster(familyid)
+*Adjusted association
+reg EXTCF_E polyve512c_rec_3 i.sampsex i.seswq35 fhanypm12, cluster(familyid)
+*Linearity / visual test
+rvfplot, yline(0)
+
+
+*Association between thought disorders and poly-victimisation, whole sample
+*Crude association
+reg THDCF_E polyve512c_rec_3, cluster(familyid)
+*Adjusted association
+reg THDCF_E polyve512c_rec_3 i.sampsex i.seswq35 fhanypm12, cluster(familyid)
+*Linearity / visual test
+rvfplot, yline(0)
+
+
+
+*********************STEP 2***************************
+
+//Supplementary TABLE 2
+
+* Associations between supportive adult and internalizing disorders, sub-sample of poly-victimised children
+
+*Crude
+reg INTCF_E c.adultec12 if polyve512c_rec_3==1, cluster(familyid)
+*Adjusted
+reg INTCF_E c.adultec12 i.sampsex i.seswq35 fhanypm12 if polyve512c_rec_3==1, cluster(familyid)
+reg, beta
+
+
+* Associations between supportive adult and externalizing disorders, sub-sample of poly-victimised children
+
+*Crude
+reg EXTCF_E c.adultec12 if polyve512c_rec_3==1, cluster(familyid)
+*Adjusted
+reg EXTCF_E c.adultec12 i.sampsex i.seswq35 fhanypm12 if polyve512c_rec_3==1, cluster(familyid)
+reg, beta
+
+
+* Associations between supportive adult and thought disorders, sub-sample of poly-victimised children
+
+*Crude
+reg THDCF_E c.adultec12 if polyve512c_rec_3==1, cluster(familyid)
+*Adjusted
+reg THDCF_E c.adultec12 i.sampsex i.seswq35 fhanypm12 if polyve512c_rec_3==1, cluster(familyid)
+reg, beta
+
+
+
+
+*(ii) Measuring childhood victimisation retrospectively at age 18
+
+*******************STEP 1**********************************
+
+//Supplementary TABLE 1
+
+
+*Association between general psychopathology and retrospective victimisation, whole sample
+
+*Crude association
+reg PH_E ctqtot_rec, cluster(familyid)
+*Adjusted association
+reg PH_E ctqtot_rec i.sampsex i.seswq35 fhanypm12, cluster(familyid)
+*Linearity / visual test
+rvfplot, yline(0)
+
+
+*Association between internalizing disorders and retrospective victimisation, whole sample
+*Crude association
+reg INTCF_E ctqtot_rec, cluster(familyid)
+*Adjusted association
+reg INTCF_E ctqtot_rec i.sampsex i.seswq35 fhanypm12, cluster(familyid)
+*Linearity / visual test
+rvfplot, yline(0)
+
+
+*Association between externalizing disorders and retrospective victimisation, whole sample
+*Crude association
+reg EXTCF_E ctqtot_rec, cluster(familyid)
+*Adjusted association
+reg EXTCF_E ctqtot_rec i.sampsex i.seswq35 fhanypm12, cluster(familyid)
+*Linearity / visual test
+rvfplot, yline(0)
+
+
+*Association between thought disorders and retrospective victimisation, whole sample
+*Crude association
+reg THDCF_E ctqtot_rec, cluster(familyid)
+*Adjusted association
+reg THDCF_E ctqtot_rec i.sampsex i.seswq35 fhanypm12, cluster(familyid)
+*Linearity / visual test
+rvfplot, yline(0)
+
+
+**************************STEP 2***********************
+
+//Supplementary TABLE 3
+
+* Associations between supportive adult and general psychopathology, sub-sample of poly-victimised children
+
+*Crude
+reg PH_E c.adultec12 if ctqtot_rec==1, cluster(familyid)
+*Adjusted
+reg PH_E c.adultec12 i.sampsex i.seswq35 fhanypm12 if ctqtot_rec==1, cluster(familyid)
+reg, beta
+
+
+//Supplementary TABLE 4
+
+****** 3 domains general psychopathology
+*Internalising disorders
+*Crude
+reg INTCF_E c.adultec12 if ctqtot_rec==1, cluster(familyid)
+
+*Adjusted
+reg INTCF_E c.adultec12 i.sampsex i.seswq35 fhanypm12 if ctqtot_rec==1, cluster(familyid)
+reg,beta
+
+
+*Externalising disorders
+*Crude
+reg EXTCF_E c.adultec12 if ctqtot_rec==1, cluster(familyid)
+
+*Adjusted
+reg EXTCF_E c.adultec12 i.sampsex i.seswq35 fhanypm12 if ctqtot_rec==1, cluster(familyid)
+reg,beta
+
+
+*Thought disorders
+*Crude
+reg THDCF_E c.adultec12 if ctqtot_rec==1, cluster(familyid)
+
+*Adjusted
+reg THDCF_E c.adultec12 i.sampsex i.seswq35 fhanypm12 if ctqtot_rec==1, cluster(familyid)
+reg,beta
+
+
+
+
+*(iii) restricting to severe-only poly-victimisation
+
+//Supplementary TABLE 1
+
+************************STEP1*******************************
+*Association between general psychopathology and severe-only poly-victimisation, whole sample
+
+*Crude association
+reg PH_E i.polyve512c_rec, cluster(familyid)
+
+*Adjusted association
+reg PH_E i.polyve512c_rec i.sampsex i.seswq35 fhanypm12, cluster(familyid)
+*Linearity / visual test
+rvfplot, yline(0)
+
+
+*Association between internalizing disorders and poly-victimisation, whole sample
+*Crude association
+reg INTCF_E polyve512c_rec, cluster(familyid)
+*Adjusted association
+reg INTCF_E polyve512c_rec i.sampsex i.seswq35 fhanypm12, cluster(familyid)
+*Linearity / visual test
+rvfplot, yline(0)
+
+
+*Association between externalizing disorders and poly-victimisation, whole sample
+*Crude association
+reg EXTCF_E polyve512c_rec, cluster(familyid)
+*Adjusted association
+reg EXTCF_E polyve512c_rec i.sampsex i.seswq35 fhanypm12, cluster(familyid)
+*Linearity / visual test
+rvfplot, yline(0)
+
+
+*Association between thought disorders and poly-victimisation, whole sample
+*Crude association
+reg THDCF_E polyve512c_rec, cluster(familyid)
+*Adjusted association
+reg THDCF_E polyve512c_rec i.sampsex i.seswq35 fhanypm12, cluster(familyid)
+*Linearity / visual test
+rvfplot, yline(0)
+
+
+
+*******************************STEP 2**********************
+
+//Supplementary TABLE 5
+
+tab polyve512c_rec, missing
+
+* Associations between supportive adult factors and general psychopathology, sub-sample of severe-only poly-victimised children
+
+*Crude
+reg PH_E c.adultec12 if polyve512c_rec==1, cluster(familyid)
+
+*Adjusted
+reg PH_E c.adultec12 i.sampsex i.seswq35 fhanypm12 if polyve512c_rec==1, cluster(familyid)
+reg, beta
+
+
+
+
+
+//Supplementary TABLE 6
+
+****** 3 domains general psychopathology
+*Internalising disorders
+*Crude
+reg INTCF_E c.adultec12 if polyve512c_rec==1, cluster(familyid)
+
+*Adjusted
+reg INTCF_E c.adultec12 i.sampsex i.seswq35 fhanypm12 if polyve512c_rec==1, cluster(familyid)
+reg,beta
+
+
+*Externalising disorders
+*Crude
+reg EXTCF_E c.adultec12 if polyve512c_rec==1, cluster(familyid)
+
+*Adjusted
+reg EXTCF_E c.adultec12 i.sampsex i.seswq35 fhanypm12 if polyve512c_rec==1, cluster(familyid)
+reg,beta
+
+*Thought disorders
+*Crude
+reg THDCF_E c.adultec12 if polyve512c_rec==1, cluster(familyid)
+
+*Adjusted
+reg THDCF_E c.adultec12 i.sampsex i.seswq35 fhanypm12 if polyve512c_rec==1, cluster(familyid)
+reg,beta
+
+
+
+
+
+
+
+
+
