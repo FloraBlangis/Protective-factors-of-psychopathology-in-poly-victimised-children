@@ -1,6 +1,6 @@
 
 *****************************************************************
-*DATA MANAGEMENT											                   	          *
+* DATA MANAGEMENT											                   	          
 *****************************************************************
 
 *Maternal warmth combined at 7 and 10
@@ -94,7 +94,7 @@ recode complete_data (. =0)
 
 
 *************************************************************
-*					GENERAL DESCRIPTION						*
+*	GENERAL DESCRIPTION
 *************************************************************
 
 **********Description / complete data***********
@@ -251,7 +251,7 @@ sum adultec12 if polyve512c_rec_3==1, detail
 
 
 ************************************************************
-*						ANALYSES					                               *
+* ANALYSES					                               
 ************************************************************
 
 
@@ -373,7 +373,7 @@ reg PH_E polyve512c_rec_3##c.adultec12 i.sampsex i.seswq35 fhanypm12, cluster(fa
   
  
 *******************************************************
-*				SENSITIVITY ANALYSES                  		  * 
+*	SENSITIVITY ANALYSES    
 *******************************************************
 
 *(i) Defining early-adult psychopathology in terms of three domains
