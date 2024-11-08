@@ -1,5 +1,6 @@
+
 *****************************************************************
-*                  DATA MANAGEMENT	                     	*
+*DATA MANAGEMENT											                   	          *
 *****************************************************************
 
 *Maternal warmth combined at 7 and 10
@@ -93,7 +94,7 @@ recode complete_data (. =0)
 
 
 *************************************************************
-*					           GENERAL DESCRIPTION		           				*
+*					GENERAL DESCRIPTION						*
 *************************************************************
 
 **********Description / complete data***********
@@ -128,6 +129,28 @@ hist PH_E if polyve512c_rec_3==0
 sum PH_E if polyve512c_rec_3==0
 hist PH_E if polyve512c_rec_3==1 
 sum PH_E if polyve512c_rec_3==1
+
+*Distribution of internalising, externalising and thoughts disorders
+hist (INTCF_E)
+sum INTCF_E, detail
+hist INTCF_E if polyve512c_rec_3==0
+sum INTCF_E if polyve512c_rec_3==0
+hist INTCF_E if polyve512c_rec_3==1 
+sum INTCF_E if polyve512c_rec_3==1
+
+hist (EXTCF_E)
+sum EXTCF_E, detail
+hist EXTCF_E if polyve512c_rec_3==0
+sum EXTCF_E if polyve512c_rec_3==0
+hist EXTCF_E if polyve512c_rec_3==1 
+sum EXTCF_E if polyve512c_rec_3==1
+
+hist (THDCF_E)
+sum THDCF_E, detail
+hist THDCF_E if polyve512c_rec_3==0
+sum THDCF_E if polyve512c_rec_3==0
+hist THDCF_E if polyve512c_rec_3==1 
+sum THDCF_E if polyve512c_rec_3==1
 
 *Proportion of victimised children per category of abuse
 tab ExpV_DV510_rec, missing // exposure to domestic violence
@@ -228,7 +251,7 @@ sum adultec12 if polyve512c_rec_3==1, detail
 
 
 ************************************************************
-*					              	ANALYSES		                     *
+*						ANALYSES					                               *
 ************************************************************
 
 
@@ -336,6 +359,7 @@ reg PH_E c.adultec12 i.sampsex i.seswq35 fhanypm12 if polyve512c_rec_3==1, clust
 reg, beta
 
 
+
 ************************STEP 3***************************
 * Are these factors specific to poly-victimised children?
 
@@ -346,9 +370,10 @@ reg PH_E polyve512c_rec_3##c.adultec12, cluster(familyid)
 reg PH_E polyve512c_rec_3##c.adultec12 i.sampsex i.seswq35 fhanypm12, cluster(familyid) 
 
   
+  
  
 *******************************************************
-*			           	SENSITIVITY ANALYSES           * 
+*				SENSITIVITY ANALYSES                  		  * 
 *******************************************************
 
 *(i) Defining early-adult psychopathology in terms of three domains
@@ -597,12 +622,3 @@ reg THDCF_E c.adultec12 if polyve512c_rec==1, cluster(familyid)
 *Adjusted
 reg THDCF_E c.adultec12 i.sampsex i.seswq35 fhanypm12 if polyve512c_rec==1, cluster(familyid)
 reg,beta
-
-
-
-
-
-
-
-
-
